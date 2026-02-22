@@ -1,9 +1,10 @@
-secret
 *.json
 *.pickle
 __pycache__/
 *.pyc
 venv/
 *.log
-.idea
+logs/
+.idea/
 settings.py
+.DS_Store
