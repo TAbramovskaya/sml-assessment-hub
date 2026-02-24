@@ -1,10 +1,8 @@
-import json
-
 import requests
 import datetime as dt
 from zoneinfo import ZoneInfo
-import settings
 import matching_model
+from secret.settings import *
 from logger import get_general_logger
 
 log = get_general_logger(__name__)
@@ -13,7 +11,7 @@ working_td = dt.timedelta(hours=3) - dt.timedelta(microseconds=1)
 
 
 def start_as_utc(start):
-    start_client = start.replace(tzinfo=settings.CLIENT_TIMEZONE)
+    start_client = start.replace(tzinfo=CLIENT_TIMEZONE)
     return start_client.astimezone(ZoneInfo('UTC'))
 
 
@@ -21,8 +19,8 @@ def get_data(api_url, start, duration=working_td):
     start_utc = start_as_utc(start)
     end_utc = start_utc + duration
 
-    params = {'client': settings.CLIENT,
-              'client_key': settings.CLIENT_KEY,
+    params = {'client': CLIENT,
+              'client_key': CLIENT_KEY,
               'start': start_utc.strftime('%Y-%m-%d %H:%M:%S.%f'),
               'end': end_utc.strftime('%Y-%m-%d %H:%M:%S.%f')}
 
