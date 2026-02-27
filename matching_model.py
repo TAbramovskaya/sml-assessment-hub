@@ -7,6 +7,8 @@ from dateutil import parser, tz
 PASSBACK_LIS_RESULT_SOURCEDID_PATTERN = r"course-v1:(?P<course>[^:]+):lms\.skillfactory\.ru-(?P<target_id>[^:]+):(?P<user_id>.+)"
 EXPECTED_RAW_DATA_FIELDS = {"lti_user_id", "attempt_type", "created_at", "is_correct", "passback_params"}
 EXPECTED_RAW_PASSBACK_PARAMS_FIELDS = {"oauth_consumer_key", "lis_result_sourcedid", "lis_outcome_service_url"}
+UNKNOWN = "__unknown__"
+ABSENT = "__absent__"
 
 log = get_validation_failures_logger(__name__)
 
@@ -17,9 +19,7 @@ Attempt = namedtuple("Attempt",
         "user_id",
         "created_at",
         "course_name",
-        "course_alias",
         "target_id",
-        "target_alias",
         "attempt_type",
         "is_correct",
         "raw_oauth_consumer_key",
@@ -84,7 +84,7 @@ def get_attempt(data_item):
     if passback_params_fields != EXPECTED_RAW_PASSBACK_PARAMS_FIELDS:
         log.warning(f"Passback params mismatch: {passback_params_fields}\n\tItem:\n\t{data_item}")
         for absent_param in EXPECTED_RAW_PASSBACK_PARAMS_FIELDS.difference(passback_params_fields):
-            passback_params[absent_param] = None
+            passback_params[absent_param] = ABSENT
 
     lis_result_sourcedid = passback_params.get("lis_result_sourcedid")
     if isinstance(lis_result_sourcedid, str):
@@ -97,25 +97,18 @@ def get_attempt(data_item):
             log.error(f"User ID mismatch:\n general: {user_id}\n in passback params: {match.group('user_id')}\n\tItem:\n\t{data_item}")
             return None
         course_name = match.group("course").replace("+", " ")
-        course_parts = course_name.split(" ")
-        course_alias = course_parts[1] if len(course_parts) > 1 else course_name
         target_id = match.group("target_id")
-        target_alias = course_alias + " " + target_id[:3] + "..." + target_id[-3:]
     else:
         log.warning(f"Could not parse 'lis_result_sourcedid' passback param: {passback_params.get('lis_result_sourcedid')}\n\tItem:\n\t{data_item}")
-        course_name = None
-        course_alias = None
-        target_id = None
-        target_alias = None
+        course_name = UNKNOWN
+        target_id = passback_params.get('lis_result_sourcedid')
 
 
     return Attempt(
         user_id=user_id,
         created_at=created_at,
         course_name=course_name,
-        course_alias=course_alias,
         target_id=target_id,
-        target_alias=target_alias,
         attempt_type=attempt_type,
         is_correct=is_correct,
         raw_oauth_consumer_key=passback_params.get("oauth_consumer_key"),
