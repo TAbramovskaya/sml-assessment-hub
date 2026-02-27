@@ -6,6 +6,6 @@ venv/
 *.log
 logs/
 .idea/
-secret/settings.py
+secret/client_settings.py
 .DS_Store
 *.env
