@@ -1,22 +1,28 @@
--- Users table
-CREATE TABLE IF NOT EXISTS <schema_name>.users (
+-- Clients table
+CREATE TABLE IF NOT EXISTS <schema_name>.clients (
     id BIGSERIAL PRIMARY KEY,
-    external_id TEXT NOT NULL UNIQUE,
-    alias TEXT
-);
-
--- Targets table
-CREATE TABLE IF NOT EXISTS <schema_name>.targets (
-    id BIGSERIAL PRIMARY KEY,
-    external_id TEXT NOT NULL UNIQUE,
-    alias TEXT
+    name TEXT NOT NULL UNIQUE
 );
 
 -- Courses table
 CREATE TABLE IF NOT EXISTS <schema_name>.courses (
     id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    alias TEXT
+    name TEXT NOT NULL,
+
+    client_id BIGINT REFERENCES <schema_name>.clients(id),
+    UNIQUE (name, client_id)
+);
+
+-- Users table
+CREATE TABLE IF NOT EXISTS <schema_name>.users (
+    id BIGSERIAL PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE
+);
+
+-- Targets table
+CREATE TABLE IF NOT EXISTS <schema_name>.targets (
+    id BIGSERIAL PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE
 );
 
 -- Attempts table
