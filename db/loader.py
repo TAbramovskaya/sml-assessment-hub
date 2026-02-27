@@ -1,5 +1,4 @@
 import psycopg
-from psycopg import sql
 from logger import get_general_logger
 from db.config import USER_DB_CONFIG, SCHEMA_NAME
 from secret.client_settings import CLIENT
@@ -8,6 +7,10 @@ log = get_general_logger(__name__)
 
 
 def insert_data(attempts_list):
+    """
+    Inserts the data to the database specified in USER_DB_CONFIG["dbname"].
+    See db/schema.sql for schema structure.
+    """
     try:
         with psycopg.connect(**USER_DB_CONFIG, autocommit=True) as conn:
             with conn.cursor() as cur:
@@ -25,51 +28,65 @@ def insert_data(attempts_list):
                 )
                 client_id = cur.fetchone()[0]
 
-                for att in attempts_list:
-                    # Courses table
-                    cur.execute(f"""
+                # Collect unique courses, users and targets to insert them in one batch each.
+                courses = {(att.course_name, client_id) for att in attempts_list}
+                users = {(att.user_id, ) for att in attempts_list}
+                targets = {(att.target_id, ) for att in attempts_list}
+
+                # Insert all courses
+                cur.executemany(
+                    f"""
                         INSERT INTO {SCHEMA_NAME}.courses (name, client_id)
                         VALUES (%s, %s)
                         ON CONFLICT (name, client_id) DO NOTHING;
-                    """, (att.course_name, client_id))
+                    """,
+                    list(courses)
+                )
 
-                    # Users table
-                    cur.execute(f"""
+                # Insert all users
+                cur.executemany(
+                    f"""
                         INSERT INTO {SCHEMA_NAME}.users (external_id)
                         VALUES (%s)
                         ON CONFLICT (external_id) DO NOTHING;
-                    """, (att.user_id, ))
+                    """,
+                    list(users)
+                )
 
-                    # Targets table
-                    cur.execute(f"""
+                # Insert all targets
+                cur.executemany(
+                    f"""
                         INSERT INTO {SCHEMA_NAME}.targets (external_id)
                         VALUES (%s)
                         ON CONFLICT (external_id) DO NOTHING;
-                    """, (att.target_id, ))
+                    """,
+                    list(targets)
+                )
 
-                    # Attempts table
-                    cur.execute(f"""
-                        INSERT INTO {SCHEMA_NAME}.attempts (
-                            created_at, 
-                            user_id, 
-                            course_id, 
-                            target_id,
-                            attempt_type, 
-                            is_correct,
-                            raw_oauth_consumer_key,
-                            raw_lis_result_sourcedid,
-                            raw_lis_outcome_service_url
-                            )
-                        VALUES (
-                            %s,
-                            (SELECT id FROM {SCHEMA_NAME}.users WHERE external_id = %s),
-                            (SELECT id FROM {SCHEMA_NAME}.courses WHERE name = %s),
-                            (SELECT id FROM {SCHEMA_NAME}.targets WHERE external_id = %s),
-                            %s, %s, %s, %s, %s
+                # Attempts table
+                cur.executemany(f"""
+                    INSERT INTO {SCHEMA_NAME}.attempts (
+                        created_at, 
+                        user_id, 
+                        course_id, 
+                        target_id,
+                        attempt_type, 
+                        is_correct,
+                        raw_oauth_consumer_key,
+                        raw_lis_result_sourcedid,
+                        raw_lis_outcome_service_url
                         )
-                        ON CONFLICT (user_id, created_at, raw_lis_result_sourcedid) DO NOTHING;
-                    """, (
-                        att.created_at,
+                    VALUES (
+                        %s,
+                        (SELECT id FROM {SCHEMA_NAME}.users WHERE external_id = %s),
+                        (SELECT id FROM {SCHEMA_NAME}.courses WHERE name = %s),
+                        (SELECT id FROM {SCHEMA_NAME}.targets WHERE external_id = %s),
+                        %s, %s, %s, %s, %s
+                    )
+                    ON CONFLICT (user_id, created_at, raw_lis_result_sourcedid) DO NOTHING;
+                """,
+                    (
+                        (att.created_at,
                         att.user_id,
                         att.course_name,
                         att.target_id,
@@ -77,11 +94,13 @@ def insert_data(attempts_list):
                         att.is_correct,
                         att.raw_oauth_consumer_key,
                         att.raw_lis_result_sourcedid,
-                        att.raw_lis_outcome_service_url
-                        ))
-                log.info(f"{len(attempts_list)} attempts processed into the database. ")
-        return True
+                        att.raw_lis_outcome_service_url)
+                        for att in attempts_list
+                    )
+                )
+
+                log.info(f"{len(attempts_list)} attempts processed into the database")
+
     except psycopg.Error as e:
         log.error(f"Error inserting data: {e}")
-        return False
-
+        raise
