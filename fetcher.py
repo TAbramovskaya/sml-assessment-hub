@@ -7,7 +7,7 @@ from logger import get_general_logger
 
 log = get_general_logger(__name__)
 
-working_td = dt.timedelta(hours=8) - dt.timedelta(microseconds=1)
+working_td = dt.timedelta(hours=24) - dt.timedelta(microseconds=1)
 
 
 def get_data(api_url, start, duration=working_td):
@@ -28,22 +28,20 @@ def get_data(api_url, start, duration=working_td):
 
     attempts = []
     failed_attempts = []
-    log.info(f"Parsing data items...")
+    log.info(f"Parsing data items:")
     for item in data:
         attempt = matching_model.get_attempt(item)
         if not attempt:
             failed_attempts.append(item)
-            print("Attempt not found or doesn't match: ", item)
             continue
         attempts.append(attempt)
-    log.info(f" {len(failed_attempts)} items failed validation")
-    log.info(f" {len(attempts)} attempts successfully added")
-
+    log.info(f"{len(failed_attempts)} items failed validation. See logs/validation.log to inspect failed items")
+    log.info(f"{len(attempts)} attempts successfully added")
     return attempts
 
 
 def _fetch_api(api_url, params):
-    log.info(f"Getting data from {api_url}...")
+    log.info(f"Getting data from {api_url}:")
 
     data = None
     try:
