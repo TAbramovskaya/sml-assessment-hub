@@ -1,5 +1,6 @@
 import re
 import json
+import datetime as dt
 from collections import namedtuple
 from logger import get_validation_failures_logger
 from dateutil import parser, tz
@@ -60,7 +61,7 @@ def get_attempt(data_item):
     # created_at validation
     try:
         dt_object = parser.parse(data_item["created_at"])
-        created_at = dt_object.astimezone(tz.UTC)
+        created_at = dt_object.replace(tzinfo=dt.timezone.utc)
     except (ValueError, TypeError):
         log.error(f"Could not parse datetime: {data_item['created_at']}\n\tItem:\n\t{data_item}")
         return None

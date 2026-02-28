@@ -1,6 +1,5 @@
 import requests
 import datetime as dt
-from zoneinfo import ZoneInfo
 import matching_model
 from secret.client_settings import *
 from logger import get_general_logger
@@ -10,8 +9,7 @@ log = get_general_logger(__name__)
 working_td = dt.timedelta(hours=24) - dt.timedelta(microseconds=1)
 
 
-def get_data(api_url, start, duration=working_td):
-    start_utc = start.astimezone(ZoneInfo('UTC'))
+def get_data(api_url, start_utc, duration=working_td):
     end_utc = start_utc + duration
 
     params = {'client': CLIENT,
@@ -35,8 +33,9 @@ def get_data(api_url, start, duration=working_td):
             failed_attempts.append(item)
             continue
         attempts.append(attempt)
-    log.info(f"{len(failed_attempts)} items failed validation. See logs/validation.log to inspect failed items")
-    log.info(f"{len(attempts)} attempts successfully added")
+    log.info(f"{len(failed_attempts)} items failed validation. See logs/validation.log to inspect warnings and failed items")
+    log.info(f"{len(attempts)} attempts are ready for processing")
+
     return attempts
 
 

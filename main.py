@@ -4,33 +4,43 @@ from fetcher import get_data
 from db.admin import *
 from db.migrate import apply_schema
 from db.loader import insert_data
+from reports.gsheets import upload_attempts_to_sheet
 from logger import get_general_logger
 
 log = get_general_logger(__name__)
 
 
 def main():
-    # Fetch data for the specified period and load to the database.
-
     # The start date will be treated as a date in UTC+00:00.
     # No other behavior is implied.
-    start = dt.datetime.strptime('2026-02-24 02:00:00', '%Y-%m-%d %H:%M:%S')
+    start = dt.datetime.strptime('2026-02-25 02:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
 
     # By default, data is requested for 24 hours starting from the start.
     # For a different period, specify the optional duration parameter.
+    log.info(f"Started preparing data")
     attempts = get_data(client_settings.API_URL, start)
 
     if len(attempts) == 0:
-        log.info(f"The fetched data contains no items.")
+        log.info(f"The fetched data contains no items")
         return
+    log.info("Finished preparing data")
 
-    # DB routine
+    # Database preparation
+    log.info("Started preparing database")
     db_create_if_not_exist()
     user_create_if_not_exist()
     schema_create_if_not_exists()
     apply_schema()
+    log.info("Finished preparing database")
 
+    log.info("Started inserting attempts into database")
     insert_data(attempts)
+    log.info("Finished inserting attempts into database")
+
+
+    log.info("Started generating report")
+    upload_attempts_to_sheet(attempts)
+    log.info("Finished generating report")
 
     # See today's log file to check the results of the workflow.
 
