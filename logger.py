@@ -29,7 +29,7 @@ def _cleanup_old_logs(logger):
             pass
 
 
-def get_general_logger(name: str) -> logging.Logger:
+def get_general_logger(name):
     logger = logging.getLogger(name)
 
     if logger.handlers:
@@ -57,7 +57,7 @@ def get_general_logger(name: str) -> logging.Logger:
     return logger
 
 
-def get_validation_failures_logger(name: str) -> logging.Logger:
+def get_validation_failures_logger(name):
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
@@ -72,5 +72,7 @@ def get_validation_failures_logger(name: str) -> logging.Logger:
 
     logger.addHandler(handler)
     logger.propagate = False
+
+    logger.info("Current session data validation log")
 
     return logger

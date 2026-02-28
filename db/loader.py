@@ -6,7 +6,7 @@ from secret.client_settings import CLIENT
 log = get_general_logger(__name__)
 
 
-def insert_data(attempts_list):
+def insert_data(attempts):
     """
     Inserts the data to the database specified in USER_DB_CONFIG["dbname"].
     See db/schema.sql for schema structure.
@@ -29,9 +29,9 @@ def insert_data(attempts_list):
                 client_id = cur.fetchone()[0]
 
                 # Collect unique courses, users and targets to insert them in one batch each.
-                courses = {(att.course_name, client_id) for att in attempts_list}
-                users = {(att.user_id, ) for att in attempts_list}
-                targets = {(att.target_id, ) for att in attempts_list}
+                courses = {(att.course_name, client_id) for att in attempts}
+                users = {(att.user_id, ) for att in attempts}
+                targets = {(att.target_id, ) for att in attempts}
 
                 # Insert all courses
                 cur.executemany(
@@ -95,11 +95,11 @@ def insert_data(attempts_list):
                         att.raw_oauth_consumer_key,
                         att.raw_lis_result_sourcedid,
                         att.raw_lis_outcome_service_url)
-                        for att in attempts_list
+                        for att in attempts
                     )
                 )
 
-                log.info(f"{len(attempts_list)} attempts processed into the database")
+                log.info(f"{len(attempts)} attempts processed into the database")
 
     except psycopg.Error as e:
         log.error(f"Error inserting data: {e}")
