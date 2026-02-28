@@ -6,11 +6,8 @@ from logger import get_general_logger
 
 log = get_general_logger(__name__)
 
-working_td = dt.timedelta(hours=24) - dt.timedelta(microseconds=1)
 
-
-def get_data(api_url, start_utc, duration=working_td):
-    end_utc = start_utc + duration
+def get_data(api_url, start_utc, end_utc):
 
     params = {'client': CLIENT,
               'client_key': CLIENT_KEY,

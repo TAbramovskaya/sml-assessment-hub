@@ -4,21 +4,22 @@ from fetcher import get_data
 from db.admin import *
 from db.migrate import apply_schema
 from db.loader import insert_data
-from reports.gsheets import upload_attempts_to_sheet
+from reports.gsheets import upload_attempts_to_sheet, export_report
 from logger import get_general_logger
 
 log = get_general_logger(__name__)
 
 
 def main():
+
     # The start date will be treated as a date in UTC+00:00.
     # No other behavior is implied.
-    start = dt.datetime.strptime('2026-02-25 02:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
+    start_utc = dt.datetime.strptime('2026-02-22 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
+    duration = dt.timedelta(hours=24) - dt.timedelta(microseconds=1)
+    end_utc = start_utc + duration
 
-    # By default, data is requested for 24 hours starting from the start.
-    # For a different period, specify the optional duration parameter.
     log.info(f"Started preparing data")
-    attempts = get_data(client_settings.API_URL, start)
+    attempts = get_data(client_settings.API_URL, start_utc, end_utc)
 
     if len(attempts) == 0:
         log.info(f"The fetched data contains no items")
