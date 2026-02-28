@@ -99,7 +99,7 @@ def insert_data(attempts):
                     )
                 )
 
-                log.info(f"{len(attempts)} attempts processed into the database")
+                log.info(f"Attempts successfully processed into the database")
 
     except psycopg.Error as e:
         log.error(f"Error inserting data: {e}")

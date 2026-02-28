@@ -1,4 +1,6 @@
 import os
+import random
+import string
 from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -66,17 +68,16 @@ def upload_attempts_to_sheet(attempts):
             valueInputOption="RAW",
             body={"values": rows}
         ).execute()
-
-        log.info(f"{len(attempts)} attempts uploaded to sheet '{sheet_name}'")
+        log.info(f"Working spreadsheetId '{EXPORT_SPREADSHEET_ID}'")
+        log.info(f"Attempts uploaded to sheet '{sheet_name}'")
 
     except HttpError as e:
         log.error(f"Google Sheets API error: {e}")
 
 
-def export_report(attempts, report_label):
+def export_report(attempts, sheet_title):
     """
     Export aggregated attempt statistics to a Google Sheets report.
-    The title of the sheet is set to report_label.
     """
     if not attempts:
         return
@@ -90,7 +91,7 @@ def export_report(attempts, report_label):
             body={
                 "requests": [{
                     "addSheet": {
-                        "properties": {"title": report_label, "index": 0}
+                        "properties": {"title": sheet_title, "index": 0}
                     }
                 }]
             }
@@ -139,12 +140,10 @@ def export_report(attempts, report_label):
         # Write data in one batch
         sheet_service.values().update(
             spreadsheetId=REPORT_SPREADSHEET_ID,
-            range=f"{report_label}!A1",
+            range=f"{sheet_title}!A1",
             valueInputOption="RAW",
             body={"values": rows}
         ).execute()
-
-        log.info(f"Report uploaded to sheet '{report_label}'")
 
         # Make header and totals bold
         row_count = len(attempts_per_course) + 2    # total number of rows with header and totals
@@ -188,6 +187,9 @@ def export_report(attempts, report_label):
             spreadsheetId=REPORT_SPREADSHEET_ID,
             body={"requests": requests}
         ).execute()
+
+        log.info(f"Working spreadsheetId '{REPORT_SPREADSHEET_ID}'")
+        log.info(f"Report uploaded to sheet '{sheet_title}'")
 
     except HttpError as e:
         log.error(f"Google Sheets API error: {e}")

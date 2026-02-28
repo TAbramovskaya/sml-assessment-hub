@@ -14,7 +14,8 @@ def main():
 
     # The start date will be treated as a date in UTC+00:00.
     # No other behavior is implied.
-    start_utc = dt.datetime.strptime('2026-02-22 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
+    start_utc = dt.datetime.strptime(
+        '2026-02-20 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
     duration = dt.timedelta(hours=24) - dt.timedelta(microseconds=1)
     end_utc = start_utc + duration
 
@@ -42,8 +43,9 @@ def main():
     log.info("Started generating report")
     upload_attempts_to_sheet(attempts)
 
-    report_label = f"{client_settings.CLIENT} {start_utc.strftime('%Y-%m-%d %H:%M')}-{end_utc.strftime('%Y-%m-%d %H:%M')}"
-    export_report(attempts, report_label)
+    # Specify the title of the sheet for the report
+    sheet_title = f"{client_settings.CLIENT} {start_utc.strftime('%Y-%m-%d %H:%M')}-{end_utc.strftime('%Y-%m-%d %H:%M')}"
+    export_report(attempts, sheet_title)
     log.info("Finished generating report")
 
     # See today's log file to check the results of the workflow.
