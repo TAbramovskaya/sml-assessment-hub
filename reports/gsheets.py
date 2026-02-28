@@ -85,6 +85,14 @@ def export_report(attempts, sheet_title):
     try:
         sheet_service = get_sheet_service()
 
+        # Ensures the sheet title is unique by appending random characters if needed
+        spreadsheet = sheet_service.get(spreadsheetId=REPORT_SPREADSHEET_ID).execute()
+        existing_titles = [sheet["properties"]["title"] for sheet in spreadsheet.get("sheets", [])]
+        original = sheet_title
+        while sheet_title in existing_titles:
+            suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+            sheet_title = f"{original}_{suffix}"
+
         # Create the sheet for the current report
         response = sheet_service.batchUpdate(
             spreadsheetId=REPORT_SPREADSHEET_ID,
