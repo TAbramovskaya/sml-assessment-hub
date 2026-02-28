@@ -41,6 +41,9 @@ def main():
 
     log.info("Started generating report")
     upload_attempts_to_sheet(attempts)
+
+    report_label = f"{client_settings.CLIENT} {start_utc.strftime('%Y-%m-%d %H:%M')}-{end_utc.strftime('%Y-%m-%d %H:%M')}"
+    export_report(attempts, report_label)
     log.info("Finished generating report")
 
     # See today's log file to check the results of the workflow.
